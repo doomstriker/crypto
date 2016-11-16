@@ -5,8 +5,8 @@
   <artifactId>RSA</artifactId>
   <packaging>jar</packaging>
   <version>1.0-SNAPSHOT</version>
-  <name>RSA</name>
-  <url>http://maven.apache.org</url>
+  <name>rsa</name>
+  <url>https://github.com/doomstriker/crypto</url>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
