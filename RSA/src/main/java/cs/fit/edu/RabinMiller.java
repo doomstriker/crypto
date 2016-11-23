@@ -53,7 +53,7 @@ public class RabinMiller {
 		BigInteger t = new BigInteger(bb.bitCount(),new Random());
 		BigInteger a = t.add(BigInteger.ONE); 
 		
-		if (a.modPow(q, n) == BigInteger.ONE) {
+		if (a.modPow(q, n).equals(BigInteger.ONE)) {
 			return true;
 		}
 		
@@ -119,27 +119,62 @@ public class RabinMiller {
 		// assign probablePrime result to bi using bitLength and rnd
 		// static method is called using class name
 		p = BigInteger.probablePrime(bitLength, rnd);
+//		p = new BigInteger("17");
 		int c = (int)(Math.log(1-certainty)/Math.log(0.5));
 		if( p.isProbablePrime(c)) {
-			String str = "ProbablePrime of bitlength " + bitLength + " is " +p;
+			String str = "ProbablePrime of bitlength " + bitLength + " is p=" +p;
 			// print bi value
 			System.out.println( str );
 		}
 
-		BigInteger q = BigInteger.probablePrime(bitLength, rnd);
+		BigInteger q ;
+		
+		do {
+			q = BigInteger.probablePrime(bitLength, new Random());
+		} while ( q.equals(p) );
+		
+//		q = new BigInteger("11");
 		if( q.isProbablePrime(c)) {
-			String str = "ProbablePrime of bitlength " + bitLength + " is " +p;
+			String str = "ProbablePrime of bitlength " + bitLength + " is q=" +q;
 			// print bi value
 			System.out.println( str );
 		}
 		
 		BigInteger n = q.multiply(p);
-		double cert = 1 - Math.pow(4, -10);
-		for (int i = 0; i < 10; i++) {	
-			System.out.println(isPrime(p));
-		}
+		
+		//compute euler totient
+		//euler theorem & prime factorization
+		//assumption q & p primer
+		BigInteger phi = totient(p,q);
+		
+		//select e random
+		BigInteger e;
+		//make sure gcd(phi,e)==1
+		do {
+			e = BigInteger.probablePrime(phi.bitLength()-1,new Random());
+		} while( !e.gcd(phi).equals(BigInteger.ONE));
+		
+		//store d
+		BigInteger d = e.modInverse(phi);
+		System.out.println("Public Key: e="+e+ " n="+n);
+		System.out.println("Private Key: d="+d+ " p="+p + " q="+q );
+//		double cert = 1 - Math.pow(4, -10);
+//		for (int i = 0; i < 10; i++) {	
+//			System.out.println(isPrime(p));
+//		}
 		
 	}
 	
+	 public static BigInteger totient(BigInteger p,BigInteger q){ 
+		 //make sure GCD = 1
+		 BigInteger t = p.gcd(q);
+		 if( !t.equals(BigInteger.ONE) ) {
+			 throw new IllegalArgumentException("p & q GCD != 1");
+		 }
+		 BigInteger a = p.subtract(BigInteger.ONE);
+		 BigInteger b = q.subtract(BigInteger.ONE);
+		 
+		 return a.multiply(b);
+		 }
 	
 }
