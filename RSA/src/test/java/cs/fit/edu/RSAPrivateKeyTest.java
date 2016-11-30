@@ -140,4 +140,23 @@ public class RSAPrivateKeyTest {
 		fail("Not yet implemented");
 	}
 
+	/**
+	 * Test method for {@link cs.fit.edu.RSAPrivateKey#decrypt(java.math.BigInteger)}.
+	 */
+	@Test
+	public final void testDecrypt() {
+		RSAPrivateKey pk = RSAPrivateKey.generateKey(1024, 99.999);
+		String content ="this is a test!";
+		byte[] bytes = content.getBytes();
+	    BigInteger msg = new BigInteger(bytes);
+	    
+	    BigInteger cipher = pk.encrypt(msg);
+	    BigInteger msg2 = pk.decrypt(cipher);
+	    
+	    String tmp = new String(msg2.toByteArray());
+	    
+	    assertEquals( "Failed decryption",content,tmp);
+		
+	}
+
 }

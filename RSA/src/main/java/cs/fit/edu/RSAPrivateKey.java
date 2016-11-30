@@ -150,7 +150,18 @@ public class RSAPrivateKey extends RSAKey {
 		}
 	}
 
-
+	/**
+	 * Decrypts c using fast decryption CRT
+	 * @param c cipher
+	 * @return decrypted message
+	 */
+	public BigInteger decrypt(BigInteger c) {
+      BigInteger m1 = c.modPow(dP, p);
+      BigInteger m2 = c.modPow(dQ, q);
+      BigInteger h = ((m1.subtract(m2)).multiply(qInv)).mod(p);
+      BigInteger m = m2.add(q.multiply(h));
+      return m;
+	}
 	/**
 	 * Generate Key using Rabin Miller test certainty and bitlength
 	 * @param bitLength the bitlength to use

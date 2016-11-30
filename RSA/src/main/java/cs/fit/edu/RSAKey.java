@@ -135,7 +135,7 @@ public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	   * @param m the value to encrypt
 	   * @return the 
 	   */
-	public BigInteger RSAEncrypt(BigInteger m) {
+	public BigInteger encrypt(BigInteger m) {
 		return m.modPow(exponent, modulus);
 	 }
 

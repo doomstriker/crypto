@@ -3,7 +3,13 @@
  */
 package cs.fit.edu;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.PrivateKey;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
@@ -22,6 +28,13 @@ public class RabinMiller {
 	private static final String SECKEY_FILENAME_DEFAULT = "secret.key";
 	private static final String CERTAINTY_KEY = "-y";
 	private static final String CERTAINTY_DEFAULT = "0.99999";
+	private static final String CREATE_KEY = "-K";
+	private static final String ENCRYPT_KEY = "-e";
+	private static final String DECRYPT_KEY = "-d";
+	private static final Object CIPHER_FILENAME_KEY = "-c";
+	private static final String CIPHER_FILENAME_DEFAULT = "cipher";
+	private static final String PLAIN_TEXT_FILENAME_DEFAULT = "plain.txt";
+	private static final Object PLAIN_TEXT_FILENAME_KEY = "-m";
 
 	
 
@@ -127,12 +140,71 @@ public class RabinMiller {
 		double certainty = Double.parseDouble(argMap.getOrDefault(CERTAINTY_KEY, CERTAINTY_DEFAULT));
 		String publicKeyFileName = argMap.getOrDefault(PUBKEY_FILENAME_KEY, PUBKEY_FILENAME_DEFAULT);
 		String secretKeyFileName = argMap.getOrDefault(SECKEY_FILENAME_KEY, SECKEY_FILENAME_DEFAULT);
+		String cipherFileName = argMap.getOrDefault(CIPHER_FILENAME_KEY, CIPHER_FILENAME_DEFAULT);
+		String plainTextFileName = argMap.getOrDefault(PLAIN_TEXT_FILENAME_KEY, PLAIN_TEXT_FILENAME_DEFAULT);
 
-		if( argMap.containsKey(PUBKEY_FILENAME_KEY)) {
+		if( argMap.containsKey(CREATE_KEY)) {
 			//generate key
 			RSAPrivateKey pp = RSAPrivateKey.generateKey(bitLength, certainty);
 			
 			pp.saveKeyPair(secretKeyFileName,publicKeyFileName);
+		} else if( argMap.containsKey(ENCRYPT_KEY)) {
+			//load public key
+			String content;
+			try {
+				content = new String(Files.readAllBytes(Paths.get(publicKeyFileName)));
+				RSAKey pub = new RSAKey();
+				pub.unmarshall(content);
+				
+				//load plain text file
+				content = new String(Files.readAllBytes(Paths.get(plainTextFileName)));
+				byte[] bytes = content.getBytes();
+			    BigInteger message = new BigInteger(bytes);
+			
+			    BigInteger cipher = pub.encrypt(message);
+			    String msg = new String(cipher.toByteArray());
+			    Path path = Paths.get(cipherFileName);
+				
+				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+					writer.write(msg);
+					System.out.println(msg);
+				} catch (IOException e3) {
+					// TODO Auto-generated catch block
+					e3.printStackTrace();
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		} else if( argMap.containsKey(DECRYPT_KEY)) {
+			//load private key
+			String content;
+			try {
+				content = new String(Files.readAllBytes(Paths.get(secretKeyFileName)));
+				RSAPrivateKey priv = new RSAPrivateKey();
+				priv.unmarshall(content);
+				
+				//load cipher file
+				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
+				byte[] bytes = content.getBytes();
+			    BigInteger cipher = new BigInteger(bytes);
+			
+			    BigInteger message = priv.decrypt(cipher);
+			    String msg = new String(message.toByteArray());
+			    Path path = Paths.get(plainTextFileName);
+				
+				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+					writer.write(msg);
+					System.out.println(msg);
+				} catch (IOException e3) {
+					// TODO Auto-generated catch block
+					e3.printStackTrace();
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
 		}
 		
 	}
