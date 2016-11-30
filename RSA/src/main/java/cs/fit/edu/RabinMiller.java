@@ -128,29 +128,13 @@ public class RabinMiller {
 		String publicKeyFileName = argMap.getOrDefault(PUBKEY_FILENAME_KEY, PUBKEY_FILENAME_DEFAULT);
 		String secretKeyFileName = argMap.getOrDefault(SECKEY_FILENAME_KEY, SECKEY_FILENAME_DEFAULT);
 
-		//generate key
-		RSAPrivateKey pp = RSAPrivateKey.generateKey(bitLength, certainty);
+		if( argMap.containsKey(PUBKEY_FILENAME_KEY)) {
+			//generate key
+			RSAPrivateKey pp = RSAPrivateKey.generateKey(bitLength, certainty);
+			
+			pp.saveKeyPair(secretKeyFileName,publicKeyFileName);
+		}
 		
-		pp.saveKeyPair(secretKeyFileName,publicKeyFileName);
-		// double cert = 1 - Math.pow(4, -10);
-		// for (int i = 0; i < 10; i++) {
-		// System.out.println(isPrime(p));
-		// }
-		RSAKey rr = new RSAKey();
-		
-		rr.setExponent(pp.getExponent());
-		rr.setModulus(pp.getModulus());
-		
-		RSAKey zz = new RSAKey();
-		zz.unmarshall(rr.marshall());
-
-		System.out.println(zz.equals(rr));
-	
-		
-		RSAPrivateKey yy = new RSAPrivateKey();
-		yy.unmarshall(pp.marshall());
-		
-		System.out.println(pp.equals(yy)+ " " +pp.equals(new RSAPrivateKey()));	
 	}
 
 }
