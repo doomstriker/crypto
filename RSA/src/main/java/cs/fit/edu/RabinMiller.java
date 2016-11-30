@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Random;
@@ -105,61 +106,16 @@ public class RabinMiller {
 		System.out.println("\n");
 	}
 
-	public static void generatePublic(BigInteger n, BigInteger e,String pubFilename) {
-		String nHex = n.toString(16);
-		String eHex = e.toString(16);
-		Path path = Paths.get(pubFilename);
-		
-		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-			writer.write("public ( modulus: "+nHex+", publicExponent: "+eHex+")");
-			
-			System.out.println("public (");
-			System.out.println("n="+nHex);
-			System.out.println("e="+eHex+" )");
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
-		}
 
-	}
 	// RSAPrivateKey: private ( modulus: n, publicExponent: e, privateExponent:
 	// d, prime1: p, prime2: q, exponent1: d mod (p-1), exponent2: d mod (q-1),
 	// coefficient: q-1 mod p)
 	// RSAPublicKey: public (modulus: n, publicExponent: e)
+////create message by converting string to integer
+    // String s = "test";
+    // byte[] bytes = s.getBytes();
+    // BigInteger message = new BigInteger(bytes);
 
-	public static void generatePrivate(BigInteger n, BigInteger e, BigInteger d, BigInteger p, BigInteger q, BigInteger e1,
-			BigInteger e2, BigInteger c,String privFilename) {
-		Path path = Paths.get(privFilename);
-		
-		String nHex = n.toString(16);
-		
-		String eHex = e.toString(16);
-		String dHex = d.toString(16);
-		String pHex = p.toString(16);
-		String qHex = q.toString(16);
-		String dPHex = e1.toString(16);
-		String dQHex = e2.toString(16);
-		String qInvHex = c.toString(16);
-		
-		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-			writer.write("private ( modulus: "+nHex+", publicExponent: "+eHex+", privateExponent: "+dHex+", prime1: "+pHex+", prime2: "+qHex);
-			writer.write(", exponent1: "+dPHex+", exponent2: "+dQHex+", coefficient: "+qInvHex+")");
-			
-			System.out.println("private (");
-			System.out.println("n="+nHex);
-			System.out.println("e="+eHex);
-			System.out.println("d="+dHex);
-			System.out.println("p="+pHex);
-			System.out.println("q="+qHex);
-			System.out.println("dP="+dPHex);
-			System.out.println("dQ="+dQHex);
-			System.out.println("qInv="+qInvHex+ ")");
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
-		}
-
-	}
 
 	public static void main(String[] args) {
 
@@ -246,8 +202,14 @@ public class RabinMiller {
 //		System.out.println("Public Key: e=" + e + " n=" + n);
 //		System.out.println("Private Key: d=" + d + " p=" + p + " q=" + q);
 		
-		generatePrivate( n,e,d,p,q,dP,dQ,qInv,secretKeyFileName);
-		generatePublic( n,e,publicKeyFileName);
+		RSAPrivateKey pp = new RSAPrivateKey();
+		pp.setExponent(e);
+		pp.setModulus(n);
+		pp.setP(p);
+		pp.setQ(q);
+		pp.setPrivateExponent(d);
+		
+		pp.generateKeyPair(secretKeyFileName,publicKeyFileName);
 		// double cert = 1 - Math.pow(4, -10);
 		// for (int i = 0; i < 10; i++) {
 		// System.out.println(isPrime(p));
@@ -260,6 +222,15 @@ public class RabinMiller {
 		RSAKey zz = new RSAKey();
 		zz.unmarshall(rr.marshall());
 
+		System.out.println(zz.equals(rr));
+	
+		
+		RSAPrivateKey yy = new RSAPrivateKey();
+		yy.unmarshall(pp.marshall());
+		
+		System.out.println(pp.equals(yy)+ " " +pp.equals(new RSAPrivateKey()));
+
+		
 	}
 
 	//
