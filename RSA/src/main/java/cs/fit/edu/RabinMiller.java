@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -158,12 +159,21 @@ public class RabinMiller {
 				
 				//load plain text file
 				content = new String(Files.readAllBytes(Paths.get(plainTextFileName)));
-				byte[] bytes = content.getBytes();
-			    BigInteger message = new BigInteger(bytes);
-			
-			    BigInteger cipher = pub.encrypt(message);
-			    String msg = new String(cipher.toByteArray());
-			    Path path = Paths.get(cipherFileName);
+				int bytesLeft = content.length();
+				int begin = 0,end = 0;
+				String msg = "";
+				int bitSize =  pub.getModulus().bitLength()/8;
+				while(bytesLeft>0) {
+					bytesLeft -= bitSize;
+					end += bitSize;
+					end = end > content.length() ? content.length() : end;
+				    BigInteger message = new BigInteger(content.substring(begin, end).getBytes());	
+				    begin = end+1;
+				    BigInteger cipher = pub.encrypt(message);
+				     msg += new String(cipher.toByteArray());
+				}
+				BigInteger test = new BigInteger(msg.getBytes());
+				Path path = Paths.get(cipherFileName);
 				
 				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
 					writer.write(msg);
@@ -188,10 +198,30 @@ public class RabinMiller {
 				//load cipher file
 				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
 				byte[] bytes = content.getBytes();
+				Collections.reverse(Arrays.asList(bytes));
 			    BigInteger cipher = new BigInteger(bytes);
 			
 			    BigInteger message = priv.decrypt(cipher);
 			    String msg = new String(message.toByteArray());
+			    
+			    
+			    //load cipher file
+//				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
+//				int bytesLeft = content.length();
+//				int begin = 0,end = 0;
+//				String msg = "";
+//				int bitSize =  priv.getModulus().bitLength()/8;
+//				while(bytesLeft>0) {
+//					bytesLeft -= bitSize;
+//					end += bitSize;
+//					end = end > content.length() ? content.length() : end;
+//				    BigInteger message = new BigInteger(content.substring(begin, end));	
+//				    begin = end+1;
+//				    BigInteger cipher = priv.decrypt(message);
+//				     msg += new String(cipher.toByteArray());
+//				}
+			    
+			    
 			    Path path = Paths.get(plainTextFileName);
 				
 				try (BufferedWriter writer = Files.newBufferedWriter(path)) {

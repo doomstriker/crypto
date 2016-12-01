@@ -146,7 +146,7 @@ public class RSAPrivateKeyTest {
 	@Test
 	public final void testDecrypt() {
 		RSAPrivateKey pk = RSAPrivateKey.generateKey(1024, 99.999);
-		String content ="this is a test!";
+		String content ="test";
 		byte[] bytes = content.getBytes();
 	    BigInteger msg = new BigInteger(bytes);
 	    
