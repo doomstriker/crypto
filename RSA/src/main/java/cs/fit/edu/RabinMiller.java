@@ -9,11 +9,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.PrivateKey;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Random;
 
 /**
  * @author Wilson Burgos
@@ -36,54 +32,11 @@ public class RabinMiller {
 	private static final String CIPHER_FILENAME_DEFAULT = "cipher";
 	private static final String PLAIN_TEXT_FILENAME_DEFAULT = "plain.txt";
 	private static final Object PLAIN_TEXT_FILENAME_KEY = "-m";
-
-	
+	private static final String SEPARATOR = ".";
 
 	/**
-	 * Test based on Fermat's Theorem
-	 * 
-	 * @param n
-	 * @return false if composite, otherwise true
+	 * Prints the help screen
 	 */
-	public static boolean isPrime(BigInteger n) {
-		boolean retVal = false;
-		BigInteger q = n.subtract(BigInteger.ONE);
-		BigInteger nMin = n.subtract(BigInteger.ONE);
-		BigInteger b = new BigInteger("2");
-		int k = 0;
-		boolean flag = true;
-		// find integers k.q k>0 q odd n-1 = 2^k q
-		do {
-			flag = q.mod(b).equals(BigInteger.ZERO);
-
-			if (flag) {
-				k++;
-				q = q.divide(b);
-			}
-		} while (flag);
-
-		// substract 2
-		BigInteger bb = n.subtract(b);
-		// random integer a, 1 < a < n-1
-		// BigInteger random 0 based need to add one
-		BigInteger t = new BigInteger(bb.bitCount(), new Random());
-		BigInteger a = t.add(BigInteger.ONE);
-
-		if (a.modPow(q, n).equals(BigInteger.ONE)) {
-			return true;
-		}
-
-		BigInteger two = new BigInteger("2");
-		String strVal = "";
-		for (int j = 0; j < k; j++) {
-			strVal = (String) Integer.toString((int) Math.pow(2, j));
-			if (a.modPow(q.multiply(new BigInteger(strVal)), n) == nMin) {
-				return true;
-			}
-		}
-		return retVal;
-	}
-
 	public static void printHelp() {
 		System.out.println("usage: RSA [options] ");
 		System.out.println("\nOptions: ");
@@ -98,16 +51,10 @@ public class RabinMiller {
 	}
 
 
-	// RSAPrivateKey: private ( modulus: n, publicExponent: e, privateExponent:
-	// d, prime1: p, prime2: q, exponent1: d mod (p-1), exponent2: d mod (q-1),
-	// coefficient: q-1 mod p)
-	// RSAPublicKey: public (modulus: n, publicExponent: e)
-////create message by converting string to integer
-    // String s = "test";
-    // byte[] bytes = s.getBytes();
-    // BigInteger message = new BigInteger(bytes);
-
-
+	/**
+	 * Main 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 
 		HashMap<String, String> argMap = new HashMap<String, String>();
@@ -159,24 +106,23 @@ public class RabinMiller {
 				
 				//load plain text file
 				content = new String(Files.readAllBytes(Paths.get(plainTextFileName)));
-				int bytesLeft = content.length();
-				int begin = 0,end = 0;
-				String msg = "";
-				int bitSize =  pub.getModulus().bitLength()/8;
-				while(bytesLeft>0) {
-					bytesLeft -= bitSize;
-					end += bitSize;
-					end = end > content.length() ? content.length() : end;
-				    BigInteger message = new BigInteger(content.substring(begin, end).getBytes());	
-				    begin = end+1;
+				//using HELL79 implementatio for Blocks of Data p.281 Course book
+				//String[] tokens = content.trim().split("\\"+SEPARATOR);
+				StringBuilder msg = new StringBuilder();
+				int end = 0;
+				for(int i=0; i< content.length() - 2; i+=2) {
+					end = end > content.length() ? content.length() : end+2;
+				    BigInteger message = new BigInteger(content.substring(i,end).getBytes());	
 				    BigInteger cipher = pub.encrypt(message);
-				     msg += new String(cipher.toByteArray());
+				     msg.append(new String(cipher.toString(16)));
+				     msg.append(SEPARATOR);
 				}
-				BigInteger test = new BigInteger(msg.getBytes());
+				//open up cipher filename
 				Path path = Paths.get(cipherFileName);
 				
+				//open up the BufferedWriter by default it auto-closes the file
 				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-					writer.write(msg);
+					writer.write(msg.toString());
 					System.out.println(msg);
 				} catch (IOException e3) {
 					// TODO Auto-generated catch block
@@ -191,42 +137,31 @@ public class RabinMiller {
 			//load private key
 			String content;
 			try {
+				//load the private key
 				content = new String(Files.readAllBytes(Paths.get(secretKeyFileName)));
 				RSAPrivateKey priv = new RSAPrivateKey();
 				priv.unmarshall(content);
-				
-				//load cipher file
-				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
-				byte[] bytes = content.getBytes();
-				Collections.reverse(Arrays.asList(bytes));
-			    BigInteger cipher = new BigInteger(bytes);
-			
-			    BigInteger message = priv.decrypt(cipher);
-			    String msg = new String(message.toByteArray());
-			    
 			    
 			    //load cipher file
-//				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
-//				int bytesLeft = content.length();
-//				int begin = 0,end = 0;
-//				String msg = "";
-//				int bitSize =  priv.getModulus().bitLength()/8;
-//				while(bytesLeft>0) {
-//					bytesLeft -= bitSize;
-//					end += bitSize;
-//					end = end > content.length() ? content.length() : end;
-//				    BigInteger message = new BigInteger(content.substring(begin, end));	
-//				    begin = end+1;
-//				    BigInteger cipher = priv.decrypt(message);
-//				     msg += new String(cipher.toByteArray());
-//				}
+				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
+				String[] tokens = content.trim().split("\\.");
+				StringBuilder msg = new StringBuilder();
+				
+				//decrypt block by block
+				for(String block : tokens) {
+					BigInteger message = new BigInteger(block,16);	
+				    BigInteger cipher = priv.decrypt(message);
+				     msg.append(new String(cipher.toByteArray()));
+				}
 			    
-			    
+				//open up plain text file
 			    Path path = Paths.get(plainTextFileName);
 				
+				//open up the BufferedWriter by default it auto-closes the file
 				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-					writer.write(msg);
+					writer.write(msg.toString());
 					System.out.println(msg);
+					writer.close();
 				} catch (IOException e3) {
 					// TODO Auto-generated catch block
 					e3.printStackTrace();

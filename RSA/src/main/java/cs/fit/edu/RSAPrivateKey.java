@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.Random;
 
 /**
- * @author J28243
+ * @author Wilson Burgos
  *
  */
 public class RSAPrivateKey extends RSAKey {
@@ -172,29 +172,22 @@ public class RSAPrivateKey extends RSAKey {
 		// create a random object
 		Random rnd = new Random();
 		
+		
+		int c = (int) (Math.log(1 - certainty) / Math.log(0.5));
+
 		// assign probablePrime result to bi using bitLength and rnd
 		// static method is called using class name
-		BigInteger p = BigInteger.probablePrime(bitLength, rnd);
-		// p = new BigInteger("17");
-		int c = (int) (Math.log(1 - certainty) / Math.log(0.5));
-		if (p.isProbablePrime(c)) {
-			String str = "ProbablePrime of bitlength " + bitLength + " is p=" + p;
-			// print bi value
-		//					System.out.println(str);
-		}
+		BigInteger p;
+		do {
+			p = BigInteger.probablePrime(bitLength, rnd);
+		} while( !p.isProbablePrime(c));
 		
 		BigInteger q;
 		
 		do {
 			q = BigInteger.probablePrime(bitLength, new Random());
-		} while (q.equals(p));
+		} while (q.equals(p) && !q.isProbablePrime(c));
 		
-		// q = new BigInteger("11");
-		if (q.isProbablePrime(c)) {
-			String str = "ProbablePrime of bitlength " + bitLength + " is q=" + q;
-			// print bi value
-		//					System.out.println(str);
-		}
 		
 		BigInteger n = q.multiply(p);
 		
