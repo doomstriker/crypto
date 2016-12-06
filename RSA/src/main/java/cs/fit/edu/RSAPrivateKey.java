@@ -175,18 +175,23 @@ public class RSAPrivateKey extends RSAKey {
 		
 		int c = (int) (Math.log(1 - certainty) / Math.log(0.5));
 
-		// assign probablePrime result to bi using bitLength and rnd
+		// assign probablePrime result to bit using bitLength and rnd
 		// static method is called using class name
 		BigInteger p;
-		int len = bitLength;
+		int len = bitLength/2;
+		double bitFract = bitLength/20;
+		int variance = (int)((bitFract)*rnd.nextDouble()+bitFract);
+		variance= rnd.nextDouble() < 0.5 ? -variance : variance;
+		int pLen = bitLength;//len + variance;
+		int qLen = bitLength;// len - variance;
 		do {
-			p = BigInteger.probablePrime(len, rnd);
+			p = BigInteger.probablePrime(pLen, rnd);
 		} while( !p.isProbablePrime(c));
 		
 		BigInteger q;
 		
 		do {
-			q = BigInteger.probablePrime(len, new Random());
+			q = BigInteger.probablePrime(qLen, new Random());
 		} while (q.equals(p) && !q.isProbablePrime(c));
 		
 		

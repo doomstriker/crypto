@@ -32,7 +32,7 @@ public class RabinMiller {
 	private static final String CIPHER_FILENAME_DEFAULT = "cipher";
 	private static final String PLAIN_TEXT_FILENAME_DEFAULT = "plain.txt";
 	private static final Object PLAIN_TEXT_FILENAME_KEY = "-m";
-	private static final String SEPARATOR = ".";
+	private static final String SEPARATOR = " ";
 
 	/**
 	 * Prints the help screen
@@ -50,6 +50,24 @@ public class RabinMiller {
 		System.out.println("\n");
 	}
 
+	//modified from stack overflow solution from member: maybeWeCouldStealAVan
+	//http://stackoverflow.com/questions/9655181/how-to-convert-a-byte-array-to-a-hex-string-in-java
+	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	public static String bytesToHex(byte[] bytes,int len) {
+	    char[] hexChars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        hexChars[j * 2] = hexArray[v >>> 4];
+	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    String retVal =  new String(hexChars);
+	    
+	    if(retVal.length() != len) {
+	    	retVal = retVal.substring(2);
+	    	//throw new IllegalArgumentException("Length greater");
+	    }
+	    return retVal;
+	}
 
 	/**
 	 * Main 
@@ -117,7 +135,9 @@ public class RabinMiller {
 				    BigInteger cipher = pub.encrypt(message);
 				    
 				    //avoid use BigInteger.toString(16) it doesn't add leading zeros
-				    msg.append(javax.xml.bind.DatatypeConverter.printHexBinary(cipher.toByteArray()));
+				    //msg.append(javax.xml.bind.DatatypeConverter.printHexBinary(cipher.toByteArray()));
+				    msg.append(bytesToHex(cipher.toByteArray(),len*2));
+				    msg.append(SEPARATOR);
 				}
 				//open up cipher filename
 				Path path = Paths.get(cipherFileName);
@@ -125,7 +145,7 @@ public class RabinMiller {
 				//open up the BufferedWriter by default it auto-closes the file
 				try (BufferedWriter writer = Files.newBufferedWriter(path)) {
 					writer.write(msg.toString());
-					System.out.println(msg);
+					System.out.println(msg.toString().replace(" ", "\n"));
 				} catch (IOException e3) {
 					// TODO Auto-generated catch block
 					e3.printStackTrace();
@@ -146,22 +166,28 @@ public class RabinMiller {
 			    
 			    //load cipher file
 				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
-				String[] tokens = content.split(" ");
+				String[] tokens = content.split(SEPARATOR);
 				StringBuilder msg = new StringBuilder();
-				
-				
-				int end = 0;
-				int len = (priv.getModulus().bitLength()/8)*2; //times 2 because each number is a 2 character hex string
-				content = content.replaceAll(" ", "");
+								
+//				int end = 0;
+//				int len = (priv.getModulus().bitLength()/8)*2; //times 2 because each number is a 2 character hex string
+//				content = content.replaceAll(" ", "");
 				//decrypt block by block
-				for(int i=0; i< content.length(); i+=len) {
-					end = end > content.length() ? content.length() : end+len;
-					String str = content.substring(i,end);
-				    BigInteger message = new BigInteger(str,16);	
-				    BigInteger cipher = priv.decrypt(message);
-  			    	msg.append(new String(cipher.toByteArray()));
-				}
+//				for(int i=0; i< content.length()-len; i+=len) {
+//					end = end > content.length() ? content.length() : end+len;
+//					String str = content.substring(i,end);
+//				    BigInteger message = new BigInteger(str,16);	
+//				    BigInteger cipher = priv.decrypt(message);
+//  			    	msg.append(new String(cipher.toByteArray()));
+//				}
 				
+				//decrypt block by block
+				for(String block : tokens) {
+					BigInteger message = new BigInteger(block,16);	
+				    BigInteger cipher = priv.decrypt(message);
+				     msg.append(new String(cipher.toByteArray()));
+				}
+			    
 				//open up plain text file
 			    Path path = Paths.get(plainTextFileName);
 				

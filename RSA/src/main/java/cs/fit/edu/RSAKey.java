@@ -11,7 +11,24 @@ import java.util.Objects;
 public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	protected BigInteger modulus;
 	protected BigInteger exponent;
+	protected boolean pkcsEnabled;
 	
+	/**
+	 * Returns true if PKCS is enabled or not
+	 * @return true if pkcs enabled, false otherwise
+	 */
+	public boolean isPkcsEnabled() {
+		return pkcsEnabled;
+	}
+
+	/**
+	 * Enables or disables pkcs encryption
+	 * @param pkcsEnabled true to enable pkcs encryption, false otherwise
+	 */
+	public void setPkcsEnabled(boolean pkcsEnabled) {
+		this.pkcsEnabled = pkcsEnabled;
+	}
+
 	/**
 	 * Returns the modulus value p*q
 	 * @return the modulues value p*q
@@ -136,7 +153,25 @@ public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	   * @return the 
 	   */
 	public BigInteger encrypt(BigInteger m) {
-		return m.modPow(exponent, modulus);
+		BigInteger preProc = preEncryption(m);
+
+		return preProc.modPow(exponent, modulus);
 	 }
 
+	protected BigInteger preEncryption(BigInteger m) {
+		
+		if( !isPkcsEnabled()) {
+			return (m);
+		} 
+//		int k = modulus.bitLength()/8;
+//		BigInteger cipher;
+//		int mLen = m.bitLength()/8;
+//		
+//		if (mLen > k - 11) {
+//			throw new IllegalArgumentException("Message too long");
+//		}
+//		
+//		if( )
+		return m;
+	}
 }
