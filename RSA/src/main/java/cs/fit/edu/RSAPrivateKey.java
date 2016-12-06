@@ -178,14 +178,15 @@ public class RSAPrivateKey extends RSAKey {
 		// assign probablePrime result to bi using bitLength and rnd
 		// static method is called using class name
 		BigInteger p;
+		int len = bitLength;
 		do {
-			p = BigInteger.probablePrime(bitLength, rnd);
+			p = BigInteger.probablePrime(len, rnd);
 		} while( !p.isProbablePrime(c));
 		
 		BigInteger q;
 		
 		do {
-			q = BigInteger.probablePrime(bitLength, new Random());
+			q = BigInteger.probablePrime(len, new Random());
 		} while (q.equals(p) && !q.isProbablePrime(c));
 		
 		

@@ -106,16 +106,18 @@ public class RabinMiller {
 				
 				//load plain text file
 				content = new String(Files.readAllBytes(Paths.get(plainTextFileName)));
-				//using HELL79 implementatio for Blocks of Data p.281 Course book
-				//String[] tokens = content.trim().split("\\"+SEPARATOR);
+				//split data into blocks
 				StringBuilder msg = new StringBuilder();
 				int end = 0;
-				for(int i=0; i< content.length() - 2; i+=2) {
-					end = end > content.length() ? content.length() : end+2;
-				    BigInteger message = new BigInteger(content.substring(i,end).getBytes());	
+				int len = pub.getModulus().bitLength()/8;
+				for(int i=0; i< content.length() - len; i+=len) {
+					end = end > content.length() ? content.length() : end+len;
+					String str = content.substring(i,end);
+				    BigInteger message = new BigInteger(str.getBytes());	
 				    BigInteger cipher = pub.encrypt(message);
-				     msg.append(new String(cipher.toString(16)));
-				     msg.append(SEPARATOR);
+				    
+				    //avoid use BigInteger.toString(16) it doesn't add leading zeros
+				    msg.append(javax.xml.bind.DatatypeConverter.printHexBinary(cipher.toByteArray()));
 				}
 				//open up cipher filename
 				Path path = Paths.get(cipherFileName);
@@ -144,16 +146,22 @@ public class RabinMiller {
 			    
 			    //load cipher file
 				content = new String(Files.readAllBytes(Paths.get(cipherFileName)));
-				String[] tokens = content.trim().split("\\.");
+				String[] tokens = content.split(" ");
 				StringBuilder msg = new StringBuilder();
 				
+				
+				int end = 0;
+				int len = (priv.getModulus().bitLength()/8)*2; //times 2 because each number is a 2 character hex string
+				content = content.replaceAll(" ", "");
 				//decrypt block by block
-				for(String block : tokens) {
-					BigInteger message = new BigInteger(block,16);	
+				for(int i=0; i< content.length(); i+=len) {
+					end = end > content.length() ? content.length() : end+len;
+					String str = content.substring(i,end);
+				    BigInteger message = new BigInteger(str,16);	
 				    BigInteger cipher = priv.decrypt(message);
-				     msg.append(new String(cipher.toByteArray()));
+  			    	msg.append(new String(cipher.toByteArray()));
 				}
-			    
+				
 				//open up plain text file
 			    Path path = Paths.get(plainTextFileName);
 				

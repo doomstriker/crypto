@@ -146,7 +146,7 @@ public class RSAPrivateKeyTest {
 	@Test
 	public final void testDecrypt() {
 		RSAPrivateKey pk = RSAPrivateKey.generateKey(1024, 99.999);
-		String content ="test";
+		String content ="Wr";
 		byte[] bytes = content.getBytes();
 	    BigInteger msg = new BigInteger(bytes);
 	    
@@ -154,6 +154,8 @@ public class RSAPrivateKeyTest {
 	    BigInteger msg2 = pk.decrypt(cipher);
 	    
 	    String tmp = new String(msg2.toByteArray());
+	    
+	    
 	    
 	    assertEquals( "Failed decryption",content,tmp);
 		
