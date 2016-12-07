@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
+import java.util.Random;
 
 public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	protected BigInteger modulus;
@@ -153,25 +154,86 @@ public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	   * @return the 
 	   */
 	public BigInteger encrypt(BigInteger m) {
+		if ( m == null) {
+			throw new IllegalArgumentException("Invalid Message");
+		}
+		
+		if( m.bitLength() > modulus.bitLength()) {
+			throw new IllegalArgumentException("Message too long");
+		}
 		BigInteger preProc = preEncryption(m);
 
 		return preProc.modPow(exponent, modulus);
 	 }
 
+	  /**
+	   * Encrypts the content of the value m, using the internal key
+	   * @param m the value to encrypt
+	   * @return the 
+	   */
+	public BigInteger encrypt(byte[] m) {
+		return encrypt(new BigInteger(1,m));
+	 }
+	
 	protected BigInteger preEncryption(BigInteger m) {
 		
 		if( !isPkcsEnabled()) {
 			return (m);
 		} 
-//		int k = modulus.bitLength()/8;
-//		BigInteger cipher;
-//		int mLen = m.bitLength()/8;
-//		
-//		if (mLen > k - 11) {
-//			throw new IllegalArgumentException("Message too long");
-//		}
-//		
-//		if( )
-		return m;
+		
+		if (modulus == null) {
+			throw new IllegalArgumentException("Modulus not set");
+		}
+		int k = (int) Math.round(modulus.bitLength()/8.0);
+		BigInteger cipher;
+		byte[] mData = m.toByteArray();
+		int mLen = mData.length;
+		
+		if (mLen > k - 11) {
+			throw new IllegalArgumentException("Message too long");
+		}
+
+		int psLength = k - mLen -3;;
+		byte[] pad = new byte[k];
+		int i=0;
+		pad[i++] = 0;
+		pad[i++] = 2;
+	
+		Random rnd = new Random();
+		//generate non zero bytes
+		while(psLength > 0) {
+			int j=0;
+			boolean zero=false;
+			do {
+				j = rnd.nextInt();
+				zero = (( (j & 0xff) == 0) || (((j >>8) & 0xff) == 0) || (((j >> 16) & 0xff) == 0) || (((j >> 24) & 0xff) == 0));
+			} while(zero);
+			byte b ;
+			if( psLength > 0) {
+				pad[i++] = (byte) (j & 0xff);
+				psLength--;
+				if( psLength > 0) {
+					pad[i++] = (byte) ((j >> 8) & 0xff);
+					psLength--;
+					if( psLength > 0) {
+						pad[i++] = (byte) ((j>> 16) & 0xff);
+						psLength--;
+						if( psLength > 0) {
+							pad[i++] = (byte) ((j >> 24) & 0xff);
+							psLength--;
+						}
+					}
+				}
+			}
+		}
+		
+		pad[i++]=0;
+		
+		
+		for( byte tmp : mData) {
+			pad[i++] = tmp;
+		}
+		cipher = new BigInteger(pad);
+		return cipher;
 	}
 }

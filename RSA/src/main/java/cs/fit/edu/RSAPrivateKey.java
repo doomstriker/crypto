@@ -155,12 +155,62 @@ public class RSAPrivateKey extends RSAKey {
 	 * @param c cipher
 	 * @return decrypted message
 	 */
+	public BigInteger decrypt(byte[] c) {
+		return decrypt(new BigInteger(c));
+	}
+	
+	/**
+	 * Decrypts c using fast decryption CRT
+	 * @param c cipher
+	 * @return decrypted message
+	 */
 	public BigInteger decrypt(BigInteger c) {
-      BigInteger m1 = c.modPow(dP, p);
-      BigInteger m2 = c.modPow(dQ, q);
-      BigInteger h = ((m1.subtract(m2)).multiply(qInv)).mod(p);
-      BigInteger m = m2.add(q.multiply(h));
-      return m;
+		
+		 BigInteger m1 = c.modPow(dP, p);
+		 BigInteger m2 = c.modPow(dQ, q);
+		 BigInteger h = ((m1.subtract(m2)).multiply(qInv)).mod(p);
+		 BigInteger m = m2.add(q.multiply(h));
+		 System.out.println("fast decryption c ="+c.toString(16)+"\n");
+		 System.out.println("m1="+m1.toString(16));
+		 System.out.println("m2="+m2.toString(16));
+		 System.out.println("h="+h.toString(16));
+		 System.out.println("m="+m.toString(16));
+		 BigInteger d = postDecryption(m);
+		 return d;
+	}
+	
+	protected BigInteger postDecryption(BigInteger m) {
+		
+		if( !isPkcsEnabled()) {
+			return (m);
+		} 
+		// check for EM block must start with 0
+		int k=0;
+		byte[] data = m.toByteArray();
+		
+		//BigInteger drops leading zeros so no need to check 
+//		if(data[k++] != 0) {
+//			//not a valid EM code
+//			throw new IllegalArgumentException("Invalid code, not started with 0");
+//		}
+		//now check the type, only supporting type 2
+		if( data[k++] != 2) {
+			throw new IllegalArgumentException("Not supported type, PKCS1.5");
+		}
+		// skip padding find 0
+		while( (data[k++] & 0xff) != 0) {
+			;//keep going
+		}
+	
+		// substract padding
+		int newLen = data.length - k;
+		byte[] newData = new byte[newLen]; 
+
+		System.arraycopy(data, data.length - newLen, newData, 0, newLen);
+	
+		BigInteger plain = new BigInteger(newData);
+		
+		return plain;
 	}
 	/**
 	 * Generate Key using Rabin Miller test certainty and bitlength
@@ -182,8 +232,8 @@ public class RSAPrivateKey extends RSAKey {
 		double bitFract = bitLength/20;
 		int variance = (int)((bitFract)*rnd.nextDouble()+bitFract);
 		variance= rnd.nextDouble() < 0.5 ? -variance : variance;
-		int pLen = bitLength;//len + variance;
-		int qLen = bitLength;// len - variance;
+		int pLen = len + variance;
+		int qLen = len - variance;
 		do {
 			p = BigInteger.probablePrime(pLen, rnd);
 		} while( !p.isProbablePrime(c));
