@@ -7,6 +7,9 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import cs.fit.edu.rsa.key.RSAKey;
+import cs.fit.edu.rsa.key.RSAPrivateKey;
+
 public class RSAKeyTest {
 
 	@Test

@@ -1,4 +1,4 @@
-package cs.fit.edu;
+package cs.fit.edu.rsa.output;
 
 public interface Unmarshall<E> {
 	/**

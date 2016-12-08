@@ -1,4 +1,4 @@
-package cs.fit.edu;
+package cs.fit.edu.rsa.key;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,10 +9,18 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Random;
 
+import cs.fit.edu.rsa.asn1.Encoder;
+import cs.fit.edu.rsa.asn1.RsaAsn;
+import cs.fit.edu.rsa.output.HexadecimalOutput;
+import cs.fit.edu.rsa.output.Marshall;
+import cs.fit.edu.rsa.output.RSAFileStorage;
+import cs.fit.edu.rsa.output.Unmarshall;
+
 public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	protected BigInteger modulus;
 	protected BigInteger exponent;
 	protected boolean pkcsEnabled;
+	protected boolean asn1Enabled;
 	
 	/**
 	 * Returns true if PKCS is enabled or not
@@ -28,6 +36,23 @@ public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	 */
 	public void setPkcsEnabled(boolean pkcsEnabled) {
 		this.pkcsEnabled = pkcsEnabled;
+	}
+
+	
+	/**
+	 * Returns true if ASN1 encoding is enabled, false otherwise
+	 * @return true if ASN1 encoding is enabled, false otherwise
+	 */
+	public boolean isAsn1Enabled() {
+		return asn1Enabled;
+	}
+
+	/**
+	 * Enables or disables Asn1 encoding
+	 * @param asn1Enabled true to enable asn1 encoding, false otherwise
+	 */
+	public void setAsn1Enabled(boolean asn1Enabled) {
+		this.asn1Enabled = asn1Enabled;
 	}
 
 	/**
@@ -127,16 +152,27 @@ public class RSAKey implements Marshall<String>, Unmarshall<String>{
 	 * @param pubFilename the filename to store the key to
 	 */
 	public void savePublic(String pubFileName) {
-		String msg = (String) publicKey();
-		Path path = Paths.get(pubFileName);
 		
-		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-			writer.write(msg);
-			msg = msg.replace(',', '\n').replace("(", "(\n");
-			System.out.println(msg);
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
+		if( isAsn1Enabled()) {
+			RsaAsn encodingLib = new RsaAsn();		
+			Encoder keyEncoder = encodingLib.EncodePublicKey(this);
+			RSAFileStorage store = new RSAFileStorage();
+			store.WriteToFile(keyEncoder, pubFileName);
+			
+			HexadecimalOutput output = new HexadecimalOutput();
+			output.LogEncoderToConsoleAsHexadecimal(keyEncoder, "Public Key ");
+		} else {
+			String msg = (String) publicKey();
+			Path path = Paths.get(pubFileName);
+			
+			try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+				writer.write(msg);
+				msg = msg.replace(',', '\n').replace("(", "(\n");
+				System.out.println(msg);
+			} catch (IOException e3) {
+				// TODO Auto-generated catch block
+				e3.printStackTrace();
+			}
 		}
 	}
 	

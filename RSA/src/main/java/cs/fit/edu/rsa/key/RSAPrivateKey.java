@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cs.fit.edu;
+package cs.fit.edu.rsa.key;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -11,6 +11,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Random;
+
+import cs.fit.edu.rsa.asn1.Decoder;
+import cs.fit.edu.rsa.asn1.Encoder;
+import cs.fit.edu.rsa.asn1.RsaAsn;
+import cs.fit.edu.rsa.output.HexadecimalOutput;
+import cs.fit.edu.rsa.output.RSAFileStorage;
 
 /**
  * @author Wilson Burgos
@@ -271,12 +277,24 @@ public class RSAPrivateKey extends RSAKey {
 		
 		return pp;
 	}
- 	/**
+	
+	/**
 	 * Generates a private & public key pair
 	 * @param privFilename the filename for the private key
 	 * @param pubFileName the filename for the public key
 	 */
 	public void saveKeyPair(String privFilename,String pubFileName) {
+		saveKeyPair(privFilename,pubFileName,false);
+	}
+
+ 	/**
+	 * Generates a private & public key pair
+	 * @param privFilename the filename for the private key
+	 * @param pubFileName the filename for the public key
+	 * @paran asn1 true to encode using asn1, false otherwise
+	 */
+	public void saveKeyPair(String privFilename,String pubFileName,boolean asn1) {
+		setAsn1Enabled(asn1);
 		savePrivateKey(privFilename);
 		savePublic(pubFileName);
 	}
@@ -287,18 +305,28 @@ public class RSAPrivateKey extends RSAKey {
 	 * @param pubFileName
 	 */
 	public void savePrivateKey(String privFilename) {
-		Path path = Paths.get(privFilename);
-		String msg = marshall();
 		
-		try (BufferedWriter writer = Files.newBufferedWriter(path)) {
-			writer.write(msg);
-			msg = msg.replace(',', '\n').replace("(", "(\n");
-			System.out.println(msg);
-		} catch (IOException e3) {
-			// TODO Auto-generated catch block
-			e3.printStackTrace();
+		if( isAsn1Enabled()) {
+			RsaAsn encodingLib = new RsaAsn();		
+			Encoder privateKeyEncoder = encodingLib.EncodePrivateKey(this);
+			RSAFileStorage store = new RSAFileStorage();
+			store.WriteToFile(privateKeyEncoder, privFilename);
+			
+			HexadecimalOutput output = new HexadecimalOutput();
+			output.LogEncoderToConsoleAsHexadecimal(privateKeyEncoder, "Private Key ");
+		} else {
+			Path path = Paths.get(privFilename);
+			String msg = marshall();
+			
+			try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+				writer.write(msg);
+				msg = msg.replace(',', '\n').replace("(", "(\n");
+				System.out.println(msg);
+			} catch (IOException e3) {
+				// TODO Auto-generated catch block
+				e3.printStackTrace();
+			}
 		}
-
 	}
 	@Override
 	public void unmarshall(String obj) {

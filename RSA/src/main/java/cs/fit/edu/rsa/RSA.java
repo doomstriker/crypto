@@ -1,7 +1,7 @@
 /**
  * Rabin-Miller Algorithm test
  */
-package cs.fit.edu;
+package cs.fit.edu.rsa;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -9,8 +9,10 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
+
+import cs.fit.edu.rsa.key.RSAKey;
+import cs.fit.edu.rsa.key.RSAPrivateKey;
 
 /**
  * @author Wilson Burgos
@@ -24,8 +26,11 @@ public class RSA {
 	private static final String PUBKEY_FILENAME_DEFAULT = "public.key";
 	private static final String SECKEY_FILENAME_KEY = "-s";
 	private static final String SECKEY_FILENAME_DEFAULT = "sec.key";
+	private static final String ASN1_KEY = "-A";
+	private static final String ASN1_DEFAULT = "false";
 	private static final String CERTAINTY_KEY = "-y";
 	private static final String CERTAINTY_DEFAULT = "0.99999";
+	private static final String HELP_KEY = "-h";
 	private static final String CREATE_KEY = "-K";
 	private static final String ENCRYPT_KEY = "-e";
 	private static final String DECRYPT_KEY = "-d";
@@ -44,6 +49,8 @@ public class RSA {
 		System.out.println("\n\tcreate RSA keys ");
 		System.out.println(
 				"\t\t-K -p public_key_file -s secret_key_file -b bits [1024 default] -y Miller_Rabin_Certainty [99.9999]");
+		System.out.println(
+				"\t\tto encode key pair using ASN1 use -A attribute ");
 		System.out.println("\tEncrypt");
 		System.out.println("\t\t-e -m plaintext_file -p public_key_file -c ciphertext_file");
 		System.out.println("\tDecrypt");
@@ -59,13 +66,15 @@ public class RSA {
 
 		HashMap<String, String> argMap = new HashMap<String, String>();
 
-		String tempKey, tempVal;
+		String tempKey="", tempVal="";
 
 		// gather all arguments to map
 		for (int i = 0; i < args.length;) {
 			tempKey = args[i];
-			tempVal = args[i + 1];
-
+			tempVal="";
+			if( i+1 < args.length )  {
+				tempVal = args[i + 1];
+			}
 			if (tempVal.contains("-")) {
 				tempVal = "";
 				i++;
@@ -75,7 +84,7 @@ public class RSA {
 			argMap.put(tempKey, tempVal);
 		}
 
-		if (argMap.size() == 0 || argMap.size() > 5 || argMap.containsKey("h")) {
+		if (argMap.size() == 0 || argMap.size() > 6 || argMap.containsKey(HELP_KEY)) {
 			printHelp();
 			System.exit(0);
 		}
@@ -84,6 +93,7 @@ public class RSA {
 		BigInteger p;
 
 		// create and assign value to bitLength
+		boolean asn1 = argMap.containsKey(ASN1_KEY);
 		int bitLength = Integer.parseInt(argMap.getOrDefault(BIT_SIZE_KEY, BIT_SIZE_DEFAULT));
 		double certainty = Double.parseDouble(argMap.getOrDefault(CERTAINTY_KEY, CERTAINTY_DEFAULT));
 		String publicKeyFileName = argMap.getOrDefault(PUBKEY_FILENAME_KEY, PUBKEY_FILENAME_DEFAULT);
@@ -95,8 +105,12 @@ public class RSA {
 			//generate key
 			RSAPrivateKey pp = RSAPrivateKey.generateKey(bitLength, certainty);
 			
-			pp.saveKeyPair(secretKeyFileName,publicKeyFileName);
+			pp.saveKeyPair(secretKeyFileName,publicKeyFileName,asn1);
 		} else if( argMap.containsKey(ENCRYPT_KEY)) {
+			if( asn1 ) {
+				System.out.println("Feature not yet supported!");
+				System.exit(0);
+			}
 			//load public key
 			String content;
 			try {
@@ -141,6 +155,10 @@ public class RSA {
 			}
 			
 		} else if( argMap.containsKey(DECRYPT_KEY)) {
+			if( asn1 ) {
+				System.out.println("Feature not yet supported!");
+				System.exit(0);
+			}
 			//load private key
 			String content;
 			try {

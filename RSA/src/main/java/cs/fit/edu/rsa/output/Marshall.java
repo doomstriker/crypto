@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cs.fit.edu;
+package cs.fit.edu.rsa.output;
 
 /**
  * @author wburgos
